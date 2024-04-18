@@ -71,16 +71,29 @@ setup_pipewire() {
 build_variant() {
     variant="$1"
     shift
-    IMG=void-live-${ARCH}-${DATE}-${variant}.iso
+    IMG=hydra-live-${ARCH}-${DATE}-${variant}.iso
     GRUB_PKGS="grub-i386-efi grub-x86_64-efi"
     A11Y_PKGS="espeakup void-live-audio brltty"
     PKGS="dialog cryptsetup lvm2 mdadm void-docs-browse xtools-minimal xmirror chrony $A11Y_PKGS $GRUB_PKGS"
     XORG_PKGS="xorg-minimal xorg-input-drivers xorg-video-drivers setxkbmap xauth font-misc-misc terminus-font dejavu-fonts-ttf orca"
     SERVICES="sshd chronyd"
 
+    HYDRA_XFCE="xfce4 base-system arandr lightdm lightdm-gtk3-greeter xfce4 gnome-themes-standard gnome-keyring network-manager-applet gvfs-afc gvfs-mtp gvfs-smb udisks2 xfce4-pulseaudio-plugin"
+    HYDRA_SHELL="starship zsh zsh-autosuggestions zsh-syntax-highlighting"
+    HYDRA_PROGS="firefox kitty neovim python python3"
+    HYDRA_UTILS="dnscrypt-proxy socklog socklog-void ufw tor vsv entr ffmpeg mpv ttf-ubuntu-font-family font-fira-ttf font-firacode nerd-fonts numlockx python3-neovim python3-pip setxkbmap tmux xdo xdotool xev"
+    HYDRA_SERVICES="dnscrypt-proxy tor ufw socklog-unix dbus lightdm NetworkManager polkitd dhcpcd wpa_supplicant acpid"
+    HYDRA_DEV="git gcc make cmake zip unzip gzip xz ctags wget curl"
+    HYDRA_DEVEL="harfbuzz-devel libX11-devel libXft-devel libXinerama-devel libXrandr-devel"
+
     LIGHTDM_SESSION=''
 
     case $variant in
+        hydra)
+            PKGS="$PKGS $XORG_PKGS $HYDRA_XFCE $HYDRA_SHELL $HYDRA_PROGS $HYDRA_UTILS $HYDRA_DEV $HYDRA_DEVEL"
+            SERVICES="$SERVICES $HYDRA_SERVICES"
+            LIGHTDM_SESSION=xfce
+        ;;
         base)
             SERVICES="$SERVICES dhcpcd wpa_supplicant acpid"
         ;;
@@ -141,7 +154,8 @@ EOF
         setup_pipewire
     fi
 
-    ./mklive.sh -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" ${REPO} "$@"
+    #./mklive.sh -a "$ARCH" -o "$IMG" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" ${REPO} "$@"
+    ./mklive.sh -a "$ARCH" -o "$IMG" -T "Hydra Linux" -C "live live.shell=/bin/zsh live.autologin=1" -I "includedir/" -p "$PKGS" -S "$SERVICES" -I "$INCLUDEDIR" ${REPO} "$@"
 
 	cleanup
 }
@@ -155,7 +169,7 @@ if [ -x installer.sh ]; then
     MKLIVE_VERSION="$(PROGNAME='' version)"
     installer=$(mktemp)
     sed "s/@@MKLIVE_VERSION@@/${MKLIVE_VERSION}/" installer.sh > "$installer"
-    install -Dm755 "$installer" "$INCLUDEDIR"/usr/bin/void-installer
+    install -Dm755 "$installer" "$INCLUDEDIR"/usr/bin/hydra-installer
     rm "$installer"
 else
     echo installer.sh not found >&2
